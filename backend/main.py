@@ -3,17 +3,46 @@ from typing import List
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from contextlib import asynccontextmanager
 
 from . import auth, crud, models, schemas
 from .database import SessionLocal, engine, get_db
 
-# Create all database tables on startup
-models.Base.metadata.create_all(bind=engine)
+def create_initial_data():
+    db = SessionLocal()
+    try:
+        client = crud.get_client_by_name(db, company_name="DefaultCorp")
+        if not client:
+            print("Creating default client and user...")
+            client_schema = schemas.ClientCreate(company_name="DefaultCorp")
+            client = crud.create_client(db, client=client_schema)
+
+            user_schema = schemas.UserCreate(
+                email="test@test.com",
+                password="password",
+                full_name="Test User",
+                client_id=client.id,
+                role="admin"
+            )
+            crud.create_user(db, user=user_schema)
+            print("Default data created.")
+    finally:
+        db.close()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create tables and initial data on startup
+    print("Running startup logic...")
+    models.Base.metadata.create_all(bind=engine)
+    create_initial_data()
+    print("Startup complete.")
+    yield
 
 app = FastAPI(
     title="RVCourier and Logistics pvt ltd API",
     description="The backend API for the Unified Logistics & Courier Management Panel.",
     version="0.1.0",
+    lifespan=lifespan
 )
 
 # =======================================
