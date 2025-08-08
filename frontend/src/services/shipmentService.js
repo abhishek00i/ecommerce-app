@@ -25,3 +25,27 @@ export const createShipment = async (shipmentData, token) => {
 
   return response.data;
 };
+
+/**
+ * Fetches a list of shipments, with optional filters.
+ * @param {object} filters - An object containing filter parameters (e.g., { status: 'Delivered' }).
+ * @param {string} token - The user's JWT authentication token.
+ * @returns {Promise<Array<object>>} A promise that resolves to an array of shipment objects.
+ */
+export const getShipments = async (filters = {}, token) => {
+  const params = new URLSearchParams();
+
+  // Append filters to params if they exist
+  if (filters.status) params.append('status', filters.status);
+  if (filters.carrier_id) params.append('carrier_id', filters.carrier_id);
+  if (filters.start_date) params.append('start_date', filters.start_date);
+  if (filters.end_date) params.append('end_date', filters.end_date);
+  if (filters.sort_by) params.append('sort_by', filters.sort_by);
+
+  const response = await api.get('/shipments/', {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+
+  return response.data;
+};

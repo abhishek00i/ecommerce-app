@@ -1,4 +1,6 @@
 from sqlalchemy.orm import Session
+from typing import Optional
+from datetime import date, timedelta
 from . import models, schemas, auth
 
 # =======================================
@@ -102,20 +104,44 @@ def create_shipment(db: Session, shipment: schemas.ShipmentCreate, client_id: in
     db.refresh(db_shipment)
     return db_shipment
 
-def get_shipments_by_client(db: Session, client_id: int, skip: int = 0, limit: int = 100):
-    return (
-        db.query(models.Shipment)
-        .filter(models.Shipment.client_id == client_id)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+from typing import Optional
+from datetime import date
+
+def get_shipments_by_client(
+    db: Session,
+    client_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    status: Optional[str] = None,
+    carrier_id: Optional[int] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    sort_by: Optional[str] = None,
+):
+    query = db.query(models.Shipment).filter(models.Shipment.client_id == client_id)
+
+    if status:
+        query = query.filter(models.Shipment.status == status)
+    if carrier_id:
+        query = query.filter(models.Shipment.carrier_id == carrier_id)
+    if start_date:
+        query = query.filter(models.Shipment.created_at >= start_date)
+    if end_date:
+        # To make the end_date inclusive, we can check for less than the next day
+        query = query.filter(models.Shipment.created_at < (end_date + timedelta(days=1)))
+
+    if sort_by == "created_at_desc":
+        query = query.order_by(models.Shipment.created_at.desc())
+    else:
+        query = query.order_by(models.Shipment.created_at.asc())
+
+    return query.offset(skip).limit(limit).all()
 
 # =======================================
 # Dashboard CRUD Functions
 # =======================================
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime
 
 def get_dashboard_kpis(db: Session, client_id: int):
     today = datetime.utcnow().date()

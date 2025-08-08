@@ -1,5 +1,5 @@
-from datetime import timedelta
-from typing import List
+from datetime import timedelta, date
+from typing import List, Optional
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -142,14 +142,27 @@ def create_shipment(
 def read_client_shipments(
     skip: int = 0,
     limit: int = 100,
+    status: Optional[str] = None,
+    carrier_id: Optional[int] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    sort_by: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_active_user),
 ):
     """
-    Retrieve all shipments for the authenticated user's client.
+    Retrieve all shipments for the authenticated user's client, with optional filtering and sorting.
     """
     shipments = crud.get_shipments_by_client(
-        db, client_id=current_user.client_id, skip=skip, limit=limit
+        db,
+        client_id=current_user.client_id,
+        skip=skip,
+        limit=limit,
+        status=status,
+        carrier_id=carrier_id,
+        start_date=start_date,
+        end_date=end_date,
+        sort_by=sort_by,
     )
     return shipments
 
