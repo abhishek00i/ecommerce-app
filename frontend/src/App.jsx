@@ -5,8 +5,9 @@ import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute'; // Import the new component
 import './App.css';
 
+import DashboardPage from './pages/DashboardPage'; // Import the new page
+
 // Placeholder components for our pages.
-const DashboardPage = () => <h1>Dashboard</h1>;
 const CreateShipmentPage = () => <h1>Create Shipment</h1>;
 const TrackShipmentsPage = () => <h1>Track Shipments</h1>;
 const AllShipmentsPage = () => <h1>All Shipments</h1>;

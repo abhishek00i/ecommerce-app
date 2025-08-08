@@ -159,6 +159,32 @@ def read_client_shipments(
     )
     return shipments
 
+# =======================================
+# Dashboard Endpoints
+# =======================================
+
+@app.get("/dashboard/kpis", response_model=schemas.DashboardKPIs, tags=["Dashboard"])
+def get_dashboard_kpis(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user),
+):
+    """
+    Retrieve Key Performance Indicators (KPIs) for the client's dashboard.
+    """
+    kpis = crud.get_dashboard_kpis(db, client_id=current_user.client_id)
+    return kpis
+
+@app.get("/dashboard/shipment-volume", response_model=List[schemas.ShipmentVolumeDataPoint], tags=["Dashboard"])
+def get_shipment_volume(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user),
+):
+    """
+    Retrieve shipment volume data for the last 30 days for the client's dashboard.
+    """
+    volume_data = crud.get_shipment_volume_last_30_days(db, client_id=current_user.client_id)
+    return volume_data
+
 # The root endpoint can be useful for a simple health check.
 @app.get("/", tags=["Health Check"])
 async def root():

@@ -110,3 +110,60 @@ def get_shipments_by_client(db: Session, client_id: int, skip: int = 0, limit: i
         .limit(limit)
         .all()
     )
+
+# =======================================
+# Dashboard CRUD Functions
+# =======================================
+from sqlalchemy import func
+from datetime import datetime, timedelta
+
+def get_dashboard_kpis(db: Session, client_id: int):
+    today = datetime.utcnow().date()
+
+    shipments_in_transit = (
+        db.query(models.Shipment)
+        .filter(models.Shipment.client_id == client_id, models.Shipment.status == "In Transit")
+        .count()
+    )
+
+    delivered_today = (
+        db.query(models.Shipment)
+        .filter(
+            models.Shipment.client_id == client_id,
+            models.Shipment.status == "Delivered",
+            func.date(models.Shipment.updated_at) == today,
+        )
+        .count()
+    )
+
+    pending_pickups = (
+        db.query(models.Shipment)
+        .filter(models.Shipment.client_id == client_id, models.Shipment.status == "Booked")
+        .count()
+    )
+
+    return {
+        "shipments_in_transit": shipments_in_transit,
+        "delivered_today": delivered_today,
+        "pending_pickups": pending_pickups,
+        "delayed_shipments": 0, # Placeholder, as 'delayed' logic is not yet defined
+    }
+
+def get_shipment_volume_last_30_days(db: Session, client_id: int):
+    thirty_days_ago = datetime.utcnow().date() - timedelta(days=30)
+
+    result = (
+        db.query(
+            func.date(models.Shipment.created_at).label("date"),
+            func.count(models.Shipment.id).label("count"),
+        )
+        .filter(
+            models.Shipment.client_id == client_id,
+            func.date(models.Shipment.created_at) > thirty_days_ago,
+        )
+        .group_by(func.date(models.Shipment.created_at))
+        .order_by(func.date(models.Shipment.created_at))
+        .all()
+    )
+
+    return [{"date": str(date), "count": count} for date, count in result]

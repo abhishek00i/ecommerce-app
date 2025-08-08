@@ -82,6 +82,19 @@ class Address(AddressBase):
         from_attributes = True
 
 # =======================================
+# Dashboard Schemas
+# =======================================
+class DashboardKPIs(BaseModel):
+    shipments_in_transit: int
+    delivered_today: int
+    pending_pickups: int
+    delayed_shipments: int
+
+class ShipmentVolumeDataPoint(BaseModel):
+    date: str
+    count: int
+
+# =======================================
 # Carrier Schemas (Refactored)
 # =======================================
 class CarrierBase(BaseModel):
