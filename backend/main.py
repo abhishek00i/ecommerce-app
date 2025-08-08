@@ -29,21 +29,15 @@ def create_initial_data():
     finally:
         db.close()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Create tables and initial data on startup
-    print("Running startup logic...")
-    models.Base.metadata.create_all(bind=engine)
-    create_initial_data()
-    print("Startup complete.")
-    yield
-
 app = FastAPI(
     title="RVCourier and Logistics pvt ltd API",
     description="The backend API for the Unified Logistics & Courier Management Panel.",
     version="0.1.0",
-    lifespan=lifespan
 )
+
+# Create tables and initial data on startup
+models.Base.metadata.create_all(bind=engine)
+create_initial_data()
 
 # =======================================
 # Authentication Endpoint

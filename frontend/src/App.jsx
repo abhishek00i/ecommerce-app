@@ -1,14 +1,18 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+// Layout and Auth Components
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Page Components
 import LoginPage from './pages/LoginPage';
-import ProtectedRoute from './components/ProtectedRoute'; // Import the new component
+import DashboardPage from './pages/DashboardPage';
+import CreateShipmentPage from './pages/CreateShipmentPage';
+
 import './App.css';
 
-import DashboardPage from './pages/DashboardPage'; // Import the new page
-
-// Placeholder components for our pages.
-const CreateShipmentPage = () => <h1>Create Shipment</h1>;
+// Placeholder components for pages not yet created
 const TrackShipmentsPage = () => <h1>Track Shipments</h1>;
 const AllShipmentsPage = () => <h1>All Shipments</h1>;
 const RateCalculatorPage = () => <h1>Rate Calculator</h1>;
