@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import date, timedelta
+import secrets
 from . import models, schemas, auth
 
 # =======================================
@@ -92,11 +93,15 @@ def create_shipment(db: Session, shipment: schemas.ShipmentCreate, client_id: in
 
     # Create the shipment and associate it with the client
     shipment_data = shipment.model_dump(exclude={'sender_address', 'recipient_address'})
+    # Generate a unique AWB number
+    awb_number = f"RVC{secrets.token_hex(6).upper()}"
+
     db_shipment = models.Shipment(
         **shipment_data,
         sender_address_id=db_sender_address.id,
         recipient_address_id=db_recipient_address.id,
-        client_id=client_id
+        client_id=client_id,
+        awb_number=awb_number
     )
 
     db.add(db_shipment)
@@ -193,3 +198,32 @@ def get_shipment_volume_last_30_days(db: Session, client_id: int):
     )
 
     return [{"date": str(date), "count": count} for date, count in result]
+
+
+# =======================================
+# Tracking CRUD Functions
+# =======================================
+from sqlalchemy.orm import joinedload
+from datetime import datetime
+
+def get_shipment_by_awb(db: Session, awb_number: str, client_id: int):
+    return (
+        db.query(models.Shipment)
+        .options(joinedload(models.Shipment.deliveries))
+        .filter(models.Shipment.awb_number == awb_number, models.Shipment.client_id == client_id)
+        .first()
+    )
+
+def add_delivery_update(db: Session, delivery: schemas.DeliveryCreate, shipment_id: int):
+    db_delivery = models.Delivery(**delivery.model_dump(), shipment_id=shipment_id)
+    db.add(db_delivery)
+
+    # Also update the shipment's main status
+    db_shipment = db.query(models.Shipment).filter(models.Shipment.id == shipment_id).first()
+    if db_shipment:
+        db_shipment.status = delivery.status
+        db_shipment.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(db_delivery)
+    return db_delivery

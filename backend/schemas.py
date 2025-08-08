@@ -95,6 +95,24 @@ class ShipmentVolumeDataPoint(BaseModel):
     count: int
 
 # =======================================
+# Delivery (Tracking History) Schemas
+# =======================================
+class DeliveryBase(BaseModel):
+    status: str
+    location: Optional[str] = None
+    remarks: Optional[str] = None
+
+class DeliveryCreate(DeliveryBase):
+    pass
+
+class Delivery(DeliveryBase):
+    id: int
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+# =======================================
 # Carrier Schemas (Refactored)
 # =======================================
 class CarrierBase(BaseModel):
@@ -136,6 +154,7 @@ class Shipment(ShipmentBase):
     sender_address: Address
     recipient_address: Address
     carrier: Carrier
+    deliveries: List[Delivery] = []
 
     class Config:
         from_attributes = True

@@ -27,6 +27,33 @@ export const createShipment = async (shipmentData, token) => {
 };
 
 /**
+ * Fetches a single shipment by its AWB number.
+ * @param {string} awb - The AWB number to search for.
+ * @param {string} token - The user's JWT authentication token.
+ * @returns {Promise<object>} A promise that resolves to the shipment object.
+ */
+export const getShipmentByAwb = async (awb, token) => {
+  const response = await api.get(`/shipments/track/${awb}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/**
+ * Adds a new delivery (tracking) event to a shipment.
+ * @param {number} shipmentId - The ID of the shipment to update.
+ * @param {object} deliveryData - The new delivery event data.
+ * @param {string} token - The user's JWT authentication token.
+ * @returns {Promise<object>} A promise that resolves to the new delivery event object.
+ */
+export const addDeliveryUpdate = async (shipmentId, deliveryData, token) => {
+  const response = await api.post(`/shipments/${shipmentId}/deliveries`, deliveryData, {
+      headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
+};
+
+/**
  * Fetches a list of shipments, with optional filters.
  * @param {object} filters - An object containing filter parameters (e.g., { status: 'Delivered' }).
  * @param {string} token - The user's JWT authentication token.

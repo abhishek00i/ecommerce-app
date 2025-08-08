@@ -29,15 +29,21 @@ def create_initial_data():
     finally:
         db.close()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create tables and initial data on startup
+    print("Running startup logic...")
+    models.Base.metadata.create_all(bind=engine)
+    create_initial_data()
+    print("Startup complete.")
+    yield
+
 app = FastAPI(
     title="RVCourier and Logistics pvt ltd API",
     description="The backend API for the Unified Logistics & Courier Management Panel.",
     version="0.1.0",
+    lifespan=lifespan,
 )
-
-# Create tables and initial data on startup
-models.Base.metadata.create_all(bind=engine)
-create_initial_data()
 
 # =======================================
 # Authentication Endpoint
@@ -191,6 +197,42 @@ def get_shipment_volume(
     """
     volume_data = crud.get_shipment_volume_last_30_days(db, client_id=current_user.client_id)
     return volume_data
+
+# =======================================
+# Tracking Endpoints
+# =======================================
+
+@app.get("/shipments/track/{awb_number}", response_model=schemas.Shipment, tags=["Tracking"])
+def track_shipment(
+    awb_number: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user),
+):
+    """
+    Track a single shipment by its AWB number.
+    """
+    db_shipment = crud.get_shipment_by_awb(db, awb_number=awb_number, client_id=current_user.client_id)
+    if db_shipment is None:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    return db_shipment
+
+@app.post("/shipments/{shipment_id}/deliveries", response_model=schemas.Delivery, tags=["Tracking"])
+def add_delivery_event(
+    shipment_id: int,
+    delivery: schemas.DeliveryCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user),
+):
+    """
+    Add a new delivery/tracking event to a shipment.
+    This is essential for testing and for future integrations with carrier webhooks.
+    """
+    # Authorization: Ensure the shipment belongs to the user's client
+    db_shipment = db.query(models.Shipment).filter(models.Shipment.id == shipment_id, models.Shipment.client_id == current_user.client_id).first()
+    if db_shipment is None:
+        raise HTTPException(status_code=404, detail="Shipment not found or you do not have permission to access it.")
+
+    return crud.add_delivery_update(db=db, delivery=delivery, shipment_id=shipment_id)
 
 # The root endpoint can be useful for a simple health check.
 @app.get("/", tags=["Health Check"])

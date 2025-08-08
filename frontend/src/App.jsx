@@ -13,8 +13,9 @@ import AllShipmentsPage from './pages/AllShipmentsPage';
 
 import './App.css';
 
+import TrackShipmentsPage from './pages/TrackShipmentPage';
+
 // Placeholder components for pages not yet created
-const TrackShipmentsPage = () => <h1>Track Shipments</h1>;
 const RateCalculatorPage = () => <h1>Rate Calculator</h1>;
 const BillingPage = () => <h1>Billing & Invoices</h1>;
 const AddressesPage = () => <h1>Manage Addresses</h1>;
